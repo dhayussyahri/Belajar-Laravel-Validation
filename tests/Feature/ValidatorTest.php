@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Rules\RegistrationRule;
 use App\Rules\UpperCase;
+use Closure;
 use Tests\TestCase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
@@ -200,6 +201,33 @@ class ValidatorTest extends TestCase
 
         $rules = [
             "username" => ["required", "email", "max:100", new UpperCase()],
+            "password" => ["required", "min:6", "max:20", new RegistrationRule()]
+        ];
+
+        $validator = Validator::make($data, $rules);
+
+        self::assertNotNull($validator);
+
+        self::assertFalse($validator->passes());
+        self::assertTrue($validator->fails());
+
+        $message = $validator->getMessageBag();
+
+        Log::info($message->toJson(JSON_PRETTY_PRINT));
+    }
+    public function testValidatorCustomFunctionRule()
+    {
+        $data = [
+            "username" => "dhayus@gmail.com",
+            "password" => "dhayus@gmail.com"
+        ];
+
+        $rules = [
+            "username" => ["required", "email", "max:100", function(string $attribute, string $value, Closure $fail){
+                if( strtoupper($value) != $value) {
+                        $fail("The field $attribute must be UPPERCASE");
+                }
+            }],
             "password" => ["required", "min:6", "max:20", new RegistrationRule()]
         ];
 
